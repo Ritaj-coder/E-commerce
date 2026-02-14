@@ -1,0 +1,212 @@
+'use client'
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import React from 'react'
+import { CartResponse } from '../interfaces/cartResponse'
+import { DeleteCartItem } from '../Services/cart/deleteProduct'
+import toast from 'react-hot-toast'
+import { UpdateCartItem } from '../Services/cart/updateCart'
+import { Button } from '@/components/ui/button'
+import { ClearCart } from '../Services/cart/clearcart'
+import img1 from '../../assets/images/trolley.png'
+import { ca } from 'zod/v4/locales'
+import Image from 'next/image'
+import Link from 'next/link'
+
+export default function cart() {
+    const queryClient =  useQueryClient()
+
+  const {data:cartData , isLoading , isError} = useQuery<CartResponse>({
+
+    queryKey : ['get-cart'] ,
+    queryFn : async ()=>{
+
+      const response = await fetch('api/cartcode')
+      const payload = await response.json()
+
+      return payload
+    }
+
+  })
+
+  //Delete Cart
+
+ const {mutate:delCartItem , isPending } = useMutation({
+    mutationFn : DeleteCartItem ,
+    onSuccess : ()=>{
+      toast.success('Product Deleted')
+     queryClient.invalidateQueries({queryKey : ['get-cart']})
+
+    } ,
+    onError : ()=>{
+      toast.error('Error')
+    }
+  })
+
+  //Update Cart
+  const {mutate:updCartItem , isPending:update } = useMutation({
+    mutationFn : UpdateCartItem ,
+    onSuccess : ()=>{
+      toast.success('Product Updated')
+     queryClient.invalidateQueries({queryKey : ['get-cart']})
+
+    } ,
+    onError : ()=>{
+      toast.error('Error')
+    }
+  })
+
+ function HandleUpdate(productId: string , count : number){
+  updCartItem({productId , count})
+  }
+
+  // Clear cart
+  const {mutate: clearCart } = useMutation({
+    mutationFn : ClearCart ,
+    onSuccess : ()=>{
+      toast.success('Cart is Clear ')
+     queryClient.invalidateQueries({queryKey : ['get-cart']})
+
+    } ,
+    onError : ()=>{
+      toast.error('Error')
+    }
+  })
+
+  if(isLoading) {
+    return <h2>Loading</h2>
+  }
+
+  if(isError) {
+    return <h2>Error</h2>
+  }
+
+  return <>
+
+  {cartData?.numOfCartItems > 0 ? 
+  <div className='flex gap-5'>
+
+    <div className='w-3/4'>
+
+    <div className="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+  <table className="w-full text-sm text-left rtl:text-right text-body">
+    <thead className="text-sm text-body bg-neutral-secondary-medium border-b border-default-medium">
+      <tr>
+        <th scope="col" className="px-16 py-3">
+          <span className="sr-only">Image</span>
+        </th>
+        <th scope="col" className="px-6 py-3 font-medium">
+          Product
+        </th>
+        <th scope="col" className="px-6 py-3 font-medium">
+          Qty
+        </th>
+        <th scope="col" className="px-6 py-3 font-medium">
+          Price
+        </th>
+        <th scope="col" className="px-6 py-3 font-medium">
+          Action
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+    
+    {cartData?.data.products.map((prod)=>{
+
+      return  <tr key={prod._id} className="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
+        <td className="p-4">
+          <img src={prod.product.imageCover} className="w-16 md:w-24 max-w-full max-h-full" alt="Apple Watch" />
+        </td>
+        <td className="px-6 py-4 font-semibold text-heading">
+         {prod.product.title}
+        </td>
+        <td className="px-6 py-4">
+          <form className="max-w-xs mx-auto">
+            <label htmlFor="counter-input-1" className="sr-only">Choose quantity:</label>
+            <div className="relative flex items-center">
+              <button onClick={()=>{
+                HandleUpdate(prod.product._id , prod.count-1)
+              }} type="button" id="decrement-button-1" data-input-counter-decrement="counter-input-1" className="flex items-center justify-center text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary rounded-full text-sm focus:outline-none h-6 w-6">
+                <svg className="w-3 h-3 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width={24} height={24} fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" /></svg>
+              </button>
+              <span id="counter-input-1" data-input-counter className="mx-3 shrink-0 text-heading border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center">{prod.count} </span>
+              <button onClick={()=>{
+                HandleUpdate(prod.product._id , prod.count+1)
+              }} type="button" id="increment-button-1" data-input-counter-increment="counter-input-1" className="flex items-center justify-center text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary rounded-full text-sm focus:outline-none h-6 w-6">
+                <svg className="w-3 h-3 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width={24} height={24} fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m-7 7V5" /></svg>
+              </button>
+            </div>
+          </form>
+        </td>
+        <td className="px-6 py-4 text-heading text-sky-700 font-bold">
+         {prod.price} EGP
+        </td>
+        <td className="px-6 py-4">
+          <span onClick={()=>{delCartItem(prod.product._id)}} className="font-medium text-red-700 hover:text-red-900 cursor-pointer">Remove</span>
+        </td>
+      </tr>
+    })}
+     
+    </tbody>
+  </table>
+</div>
+
+    </div>
+
+     <div id="summary" className=" w-full sm:w-1/4 md:w-1/2 px-8 py-10">
+
+     <div className='flex justify-between'>
+    <h1 className="font-semibold text-2xl pb-4">Order Summary</h1>
+     <span onClick={()=>{
+      clearCart()
+     }}  className="font-medium text-sky-700 hover:text-sky-800 cursor-pointer">Clear</span>
+     </div>
+
+  <div className="flex justify-between mt-10 mb-5">
+    <span className="font-semibold text-sm uppercase">Items : <span>{cartData?.numOfCartItems}</span></span>
+    <span className="font-semibold text-sm">{cartData?.data.totalCartPrice} EGP</span>
+  </div>
+  <div>
+    <label className="font-medium inline-block mb-3 text-sm uppercase">
+      Shipping
+    </label>
+    <select className="block p-2 text-gray-600 w-full text-sm">
+      <option>Standard shipping - 50 EGP</option>
+    </select>
+  </div>
+  <div className="py-10">
+    <label htmlFor="promo" className="font-semibold inline-block mb-3 text-sm uppercase">
+      Promo Code
+    </label>
+    <input type="text" id="promo" placeholder="Enter your code" className="p-2 text-sm w-full" />
+  </div>
+  <button className="bg-black hover:bg-black px-5 py-2 text-sm text-white uppercase">
+    Apply
+  </button>
+  <div className="border-t mt-8">
+    <div className="flex font-semibold justify-between py-6 text-sm uppercase">
+      <span>Total cost</span>
+      <span>{cartData?.data.totalCartPrice} EGP</span>
+    </div>
+    <Button className="bg-blue-800 font-semibold hover:bg-blue-900 py-3 text-sm text-white uppercase w-full">
+
+      <Link href={`/Checkout/${cartData?.cartId}`}>
+       Checkout
+      </Link>
+     
+    </Button>
+  </div>
+</div>
+
+
+    </div>: <Image src={img1} alt='cart' width={300} height={300}/>}
+
+  
+
+  
+  
+
+
+  
+  </>
+}
