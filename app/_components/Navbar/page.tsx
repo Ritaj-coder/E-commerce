@@ -96,7 +96,7 @@ export default function Navbar() {
 
         <li className='relative'>
 
-          {cartData?.numOfCartItems > 0 ?  <Badge className='bg-blue-600 text-white p-1 
+          {cartData && cartData.numOfCartItems && cartData.numOfCartItems > 0 ?  <Badge className='bg-blue-600 text-white p-1 
           rounded-full absolute start-0 top-[20px] left-5'>{cartData?.numOfCartItems}</Badge> : ''}
 
           <Link href={'/Cart'}>

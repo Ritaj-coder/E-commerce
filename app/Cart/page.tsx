@@ -83,7 +83,7 @@ export default function cart() {
 
   return <>
 
-  {cartData?.numOfCartItems > 0 ? 
+  {cartData && cartData.numOfCartItems && cartData.numOfCartItems > 0 ? 
   <div className='flex gap-5'>
 
     <div className='w-3/4'>
