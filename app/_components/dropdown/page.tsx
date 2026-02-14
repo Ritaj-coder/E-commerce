@@ -13,7 +13,11 @@ import {
 import Image from 'next/image'
 import Link from "next/link"
 
-export function DropdownMenuBasic({logout}) {
+interface DropdownMenuBasicProps {
+  logout: () => void
+}
+
+export function DropdownMenuBasic({ logout }: DropdownMenuBasicProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
